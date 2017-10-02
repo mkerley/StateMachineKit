@@ -45,12 +45,14 @@ open class StateMachine<State: Hashable, Event: Hashable> {
 	typealias TransitionMap = [Event: State]
     typealias StateTransitionMap = [State: TransitionMap]
 	typealias StateActionMap = [State: (State, State) -> Void]
+	public typealias ChangeHandler = (_ old: State, _ new: State, _ event: Event) -> Void
 
 	public class Config {
 		fileprivate var transitions: StateTransitionMap = [:]
 		fileprivate var defaultTransitions: TransitionMap = [:]
 		fileprivate var onExit: StateActionMap = [:]
 		fileprivate var onEnter: StateActionMap = [:]
+		fileprivate var onChange: ChangeHandler?
 
 		public func transition(from oldState: State, on event: Event, to newState: State) {
 			var oldStateHandler = transitions[oldState]
@@ -80,6 +82,10 @@ open class StateMachine<State: Hashable, Event: Hashable> {
 		public func onEnter(_ state: State, handler: @escaping (_ old: State, _ new: State) -> Void) {
 			onEnter[state] = handler
 		}
+
+		public func onChange(handler: @escaping ChangeHandler) {
+			onChange = handler
+		}
 	}
     
     private (set) var state: State
@@ -88,6 +94,7 @@ open class StateMachine<State: Hashable, Event: Hashable> {
 	private let defaultTransitions: TransitionMap
 	private let onExit: StateActionMap
 	private let onEnter: StateActionMap
+	private let onChange: ChangeHandler?
 
 	public init(state: State, configClosure: (_ config: Config) -> Void) {
 		let config = Config()
@@ -98,6 +105,7 @@ open class StateMachine<State: Hashable, Event: Hashable> {
 		self.defaultTransitions = config.defaultTransitions
 		self.onExit = config.onExit
 		self.onEnter = config.onEnter
+		self.onChange = config.onChange
 	}
     
     open func handle(_ event: Event) {
@@ -113,6 +121,8 @@ open class StateMachine<State: Hashable, Event: Hashable> {
 		onExit[state]?(oldState, newState)
         state = newState
 		onEnter[state]?(oldState, newState)
+
+		onChange?(oldState, newState, event)
     }
     
     private func state(for event: Event) -> State {

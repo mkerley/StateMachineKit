@@ -159,4 +159,30 @@ class StateMachineKitTests: XCTestCase {
 		XCTAssertEqual(sm.state, .a)
 		XCTAssertFalse(didExitA)
 	}
+
+	func testOnChange() {
+		enum State {
+			case a, b, c
+		}
+
+		enum Event {
+			case aToB, bToC
+		}
+
+		var changeLog: [(old: State, new: State, event: Event)] = []
+
+		let sm = StateMachine<State, Event>(state: .a) {
+			$0.transition(from: .a, on: .aToB, to: .b)
+			$0.transition(from: .b, on: .bToC, to: .c)
+
+			$0.onChange() { changeLog.append(($0, $1, $2)) }
+		}
+
+		sm.handle(.aToB)
+		sm.handle(.aToB)
+		sm.handle(.bToC)
+
+		XCTAssert(changeLog[0] == (.a, .b, .aToB))
+		XCTAssert(changeLog[1] == (.b, .c, .bToC))
+	}
 }
