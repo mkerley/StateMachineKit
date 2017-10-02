@@ -9,7 +9,8 @@
 /* Begin PBXBuildFile section */
 		6B5314AD1F8087FD00FE07FE /* StateMachineKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B5314A31F8087FD00FE07FE /* StateMachineKit.framework */; };
 		6B5314B41F8087FD00FE07FE /* StateMachineKit.h in Headers */ = {isa = PBXBuildFile; fileRef = 6B5314A61F8087FD00FE07FE /* StateMachineKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		6BE90F161F818E4700DF978E /* StateMachineKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5314B11F8087FD00FE07FE /* StateMachineKitTests.swift */; };
+		6BB4CF251F81F8E1003D2E88 /* AsyncStateMachineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB4CF241F81F8E1003D2E88 /* AsyncStateMachineTests.swift */; };
+		6BE90F161F818E4700DF978E /* StateMachineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5314B11F8087FD00FE07FE /* StateMachineTests.swift */; };
 		6BE90F181F8190F900DF978E /* StateMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE90F171F8190F900DF978E /* StateMachine.swift */; };
 /* End PBXBuildFile section */
 
@@ -28,8 +29,9 @@
 		6B5314A61F8087FD00FE07FE /* StateMachineKit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StateMachineKit.h; sourceTree = "<group>"; };
 		6B5314A71F8087FD00FE07FE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6B5314AC1F8087FD00FE07FE /* StateMachineKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StateMachineKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		6B5314B11F8087FD00FE07FE /* StateMachineKitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateMachineKitTests.swift; sourceTree = "<group>"; };
+		6B5314B11F8087FD00FE07FE /* StateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateMachineTests.swift; sourceTree = "<group>"; };
 		6B5314B31F8087FD00FE07FE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		6BB4CF241F81F8E1003D2E88 /* AsyncStateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncStateMachineTests.swift; sourceTree = "<group>"; };
 		6BE90F171F8190F900DF978E /* StateMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateMachine.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -83,7 +85,8 @@
 		6B5314B01F8087FD00FE07FE /* StateMachineKitTests */ = {
 			isa = PBXGroup;
 			children = (
-				6B5314B11F8087FD00FE07FE /* StateMachineKitTests.swift */,
+				6B5314B11F8087FD00FE07FE /* StateMachineTests.swift */,
+				6BB4CF241F81F8E1003D2E88 /* AsyncStateMachineTests.swift */,
 				6B5314B31F8087FD00FE07FE /* Info.plist */,
 			);
 			path = StateMachineKitTests;
@@ -208,7 +211,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6BE90F161F818E4700DF978E /* StateMachineKitTests.swift in Sources */,
+				6BB4CF251F81F8E1003D2E88 /* AsyncStateMachineTests.swift in Sources */,
+				6BE90F161F818E4700DF978E /* StateMachineTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
