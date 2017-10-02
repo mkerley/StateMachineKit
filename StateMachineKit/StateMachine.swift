@@ -8,7 +8,40 @@
 
 import Foundation
 
-class StateMachine<State: Hashable, Event: Hashable> {
+/// A basic state machine. Requires you to provide:
+/// 1. A set of states (typically an enum)
+/// 2. A set of events (typically an enum)
+/// 3. An initial state
+/// 4. Allowable transitions between states (i.e. given state `X` and event `Y`, move to state `Z`)
+/// 5. (Optional) Handlers to run when entering or exiting specific states
+///
+/// Here's a minimal example:
+/// ````
+/// import StateMachineKit
+///
+/// enum State {
+///   case foo, bar
+/// }
+///
+/// enum Event {
+///   case go
+/// }
+///
+/// let machine = StateMachine<State, Event>(state: .foo) { config in
+///   config.transition(from: .foo, on: .go, to: .bar)
+///   config.onExit(.foo) { print("Bye foo") }
+///   config.onEnter(.bar) { print("Hello bar") }
+/// }
+/// ````
+///
+/// This creates a machine in "foo" state
+///
+/// Once the machine is defined, you can feed it events:
+/// ````
+/// machine.handle(.go)
+/// ````
+///
+open class StateMachine<State: Hashable, Event: Hashable> {
 	typealias TransitionMap = [Event: State]
     typealias StateTransitionMap = [State: TransitionMap]
 	typealias StateActionMap = [State: (State, State) -> Void]
@@ -19,7 +52,7 @@ class StateMachine<State: Hashable, Event: Hashable> {
 		fileprivate var onExit: StateActionMap = [:]
 		fileprivate var onEnter: StateActionMap = [:]
 
-		func transition(from oldState: State, on event: Event, to newState: State) {
+		public func transition(from oldState: State, on event: Event, to newState: State) {
 			var oldStateHandler = transitions[oldState]
 			if oldStateHandler == nil {
 				oldStateHandler = [:]
@@ -28,23 +61,23 @@ class StateMachine<State: Hashable, Event: Hashable> {
 			transitions[oldState] = oldStateHandler
 		}
 
-		func transitionFromAny(on event: Event, to newState: State) {
+		public func transitionFromAny(on event: Event, to newState: State) {
 			defaultTransitions[event] = newState
 		}
 
-		func onExit(_ state: State, handler: @escaping () -> Void) {
+		public func onExit(_ state: State, handler: @escaping () -> Void) {
 			onExit[state] = { _, _ in handler() }
 		}
 
-		func onExit(_ state: State, handler: @escaping (_ old: State, _ new: State) -> Void) {
+		public func onExit(_ state: State, handler: @escaping (_ old: State, _ new: State) -> Void) {
 			onExit[state] = handler
 		}
 
-		func onEnter(_ state: State, handler: @escaping () -> Void) {
+		public func onEnter(_ state: State, handler: @escaping () -> Void) {
 			onEnter[state] = { _, _ in handler() }
 		}
 
-		func onEnter(_ state: State, handler: @escaping (_ old: State, _ new: State) -> Void) {
+		public func onEnter(_ state: State, handler: @escaping (_ old: State, _ new: State) -> Void) {
 			onEnter[state] = handler
 		}
 	}
@@ -56,7 +89,7 @@ class StateMachine<State: Hashable, Event: Hashable> {
 	private let onExit: StateActionMap
 	private let onEnter: StateActionMap
 
-    init(state: State, configClosure: (_ config: Config) -> Void) {
+	public init(state: State, configClosure: (_ config: Config) -> Void) {
 		let config = Config()
 		configClosure(config)
 
@@ -101,34 +134,4 @@ class StateMachine<State: Hashable, Event: Hashable> {
             NSLog("\(state)[\(event)] -> \(newState)")
         }
     }
-}
-
-/// A state machine that queues all state changes. This enforces in-order processing
-/// and helps clients avoid race conditions.
-///
-/// The tradeoff is that calls to handle(event:) return asynchronously.
-/// An optional completion handler is provided to compensate for this.
-class AsyncStateMachine<State: Hashable, Event: Hashable>: StateMachine<State, Event> {
-	private let eventQueue: OperationQueue = {
-		let q = OperationQueue()
-		q.maxConcurrentOperationCount = 1
-		return q
-	}()
-
-	override func handle(_ event: Event) {
-		eventQueue.addOperation { [weak self] in
-			self?.process(event)
-		}
-	}
-
-	func handle(_ event: Event, completionHandler: @escaping () -> Void) {
-		eventQueue.addOperation { [weak self] in
-			self?.process(event)
-			completionHandler()
-		}
-	}
-
-	private func process(_ event: Event) {
-		super.handle(event)
-	}
 }
