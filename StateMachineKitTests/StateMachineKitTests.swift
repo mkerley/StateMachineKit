@@ -205,6 +205,72 @@ class StateMachineKitTests: XCTestCase {
 		login.simulateLogin(result: .networkError)
 		waitForExpectations(timeout: 3, handler: nil)
 	}
+
+	func testBasicAsyncMachine() {
+		enum State {
+			case foo, bar
+		}
+
+		enum Event {
+			case go
+		}
+
+		let sm = AsyncStateMachine<State, Event>(state: .foo) { config in
+			config.transition(from: .foo, on: .go, to: .bar)
+		}
+
+		let expect = expectation(description: "should go to bar")
+
+		XCTAssertEqual(sm.state, State.foo)
+		sm.handle(.go) {
+		XCTAssertEqual(sm.state, State.bar)
+			expect.fulfill()
+		}
+		waitForExpectations(timeout: 1, handler: nil)
+	}
+
+	func testAsyncMachineShouldHandleOneEventAtATime() {
+		enum State {
+			case a, b, c
+		}
+
+		enum Event {
+			case aToB, bToC, aToC
+		}
+
+		var sm: AsyncStateMachine<State, Event>!
+
+		let expect = expectation(description: "should handle aToB and ignore aToC")
+
+		var count = 0
+		let onExitA = {
+			// The normal/sync machine will go into an infinite loop on this test.
+			// This counter escapes the loop and lets the test fail quickly.
+			if count > 0 {
+				XCTFail("Should not attempt to handle simultaneous events")
+				return
+			}
+			count += 1
+			sm.handle(.aToC) {
+				// By the time this queued event gets handled, we'll be in state b,
+				// and aToC should be ignored
+				XCTAssertEqual(sm.state, .b)
+				expect.fulfill()
+			}
+		}
+
+		sm = AsyncStateMachine<State, Event>(state: .a) {
+			$0.transition(from: .a, on: .aToB, to: .b)
+			$0.transition(from: .b, on: .bToC, to: .c)
+			$0.transition(from: .a, on: .aToC, to: .c)
+
+			$0.onExit(.a, handler: onExitA)
+		}
+
+		XCTAssertEqual(sm.state, .a)
+		sm.handle(.aToB)
+		waitForExpectations(timeout: 1, handler: nil)
+	}
 }
 
 class LoginFixture {
@@ -221,8 +287,8 @@ class LoginFixture {
 		case loginFail
 	}
 
-	lazy var stateMachine: StateMachine<State, Event> = {
-		let sm = StateMachine<State, Event>(state: .loggedOut) {
+	lazy var stateMachine: AsyncStateMachine<State, Event> = {
+		let sm = AsyncStateMachine<State, Event>(state: .loggedOut) {
 			$0.transition(from: .loggedOut, on: .sendLoginRequest, to: .loggingIn)
 
 			$0.transition(from: .loggingIn, on: .networkError, to: .loggedOut)

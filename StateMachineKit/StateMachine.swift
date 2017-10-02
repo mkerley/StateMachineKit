@@ -51,27 +51,23 @@ class StateMachine<State: Hashable, Event: Hashable> {
     
     private (set) var state: State
     
-    let transitions: StateTransitionMap
-	let defaultTransitions: TransitionMap
-	let onExit: StateActionMap
-	let onEnter: StateActionMap
-    
-    private init(state: State, config: Config) {
+    private let transitions: StateTransitionMap
+	private let defaultTransitions: TransitionMap
+	private let onExit: StateActionMap
+	private let onEnter: StateActionMap
+
+    init(state: State, configClosure: (_ config: Config) -> Void) {
+		let config = Config()
+		configClosure(config)
+
 		self.state = state
 		self.transitions = config.transitions
 		self.defaultTransitions = config.defaultTransitions
 		self.onExit = config.onExit
 		self.onEnter = config.onEnter
 	}
-
-	convenience init(state: State, configClosure: (_ config: Config) -> Void) {
-		let config = Config()
-		configClosure(config)
-
-		self.init(state: state, config: config)
-	}
     
-    func handle(_ event: Event) {
+    open func handle(_ event: Event) {
         let newState = state(for: event)
         
         log(state: state, event: event, newState: newState)
@@ -86,7 +82,7 @@ class StateMachine<State: Hashable, Event: Hashable> {
 		onEnter[state]?(oldState, newState)
     }
     
-    func state(for event: Event) -> State {
+    private func state(for event: Event) -> State {
         if let handlers = transitions[state], let newState = handlers[event] {
 			return newState
 		}
@@ -105,4 +101,34 @@ class StateMachine<State: Hashable, Event: Hashable> {
             NSLog("\(state)[\(event)] -> \(newState)")
         }
     }
+}
+
+/// A state machine that queues all state changes. This enforces in-order processing
+/// and helps clients avoid race conditions.
+///
+/// The tradeoff is that calls to handle(event:) return asynchronously.
+/// An optional completion handler is provided to compensate for this.
+class AsyncStateMachine<State: Hashable, Event: Hashable>: StateMachine<State, Event> {
+	private let eventQueue: OperationQueue = {
+		let q = OperationQueue()
+		q.maxConcurrentOperationCount = 1
+		return q
+	}()
+
+	override func handle(_ event: Event) {
+		eventQueue.addOperation { [weak self] in
+			self?.process(event)
+		}
+	}
+
+	func handle(_ event: Event, completionHandler: @escaping () -> Void) {
+		eventQueue.addOperation { [weak self] in
+			self?.process(event)
+			completionHandler()
+		}
+	}
+
+	private func process(_ event: Event) {
+		super.handle(event)
+	}
 }
